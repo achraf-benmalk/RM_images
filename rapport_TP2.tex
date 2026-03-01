@@ -3,7 +3,7 @@
 % Packages
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[english]{babel}
+\usepackage[french]{babel}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{geometry}
@@ -30,7 +30,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\textcolor{gray}{MOR 2025 -- (MS)$^2$SC}}
-\fancyhead[R]{\small\textcolor{gray}{\textit{Session 2: PGD for the Heat Equation}}}
+\fancyhead[R]{\small\textcolor{gray}{\textit{Séance 2 : PGD pour l'équation de la chaleur}}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -63,18 +63,18 @@
 \begin{titlepage}
 \centering
 \vspace*{2cm}
-{\Huge\bfseries\textcolor{darkblue}{MOR Practical Session}\par}
+{\Huge\bfseries\textcolor{darkblue}{Séances pratiques MOR}\par}
 \vspace{0.5cm}
-{\LARGE\textcolor{darkblue}{Report -- Session 2}\par}
+{\LARGE\textcolor{darkblue}{Rapport -- Séance 2}\par}
 \vspace{1.5cm}
-{\Large Solving the Unsteady Heat Equation\par}
-{\large with Proper Generalized Decomposition (A Priori)\par}
+{\Large Résolution de l'équation de la chaleur instationnaire\par}
+{\large par Décomposition Propre Généralisée (a priori)\par}
 \vspace{2cm}
-{\large ENS Paris-Saclay -- (MS)$^2$SC Master\par}
+{\large ENS Paris-Saclay -- Master (MS)$^2$SC\par}
 \vspace{0.5cm}
-{\large Eren Alagoz (Instructor)\par}
+{\large Encadrant : Eren Alagoz\par}
 \vspace{2cm}
-%{\large \textbf{Authors:} Name 1, Name 2\par}
+{\large \textbf{Auteurs :} Achraf Benmalk, Binôme\par}
 \vspace{1cm}
 {\large \today\par}
 \end{titlepage}
@@ -84,36 +84,51 @@
 \newpage
 
 % ============================================================
-\section{Problem Statement}
+\section{Énoncé du problème}
 % ============================================================
 
-We consider the 1D unsteady heat equation on a bar $\Omega = [0, L]$ over time interval $I = [0, T]$:
+Nous considérons l'équation de la chaleur 1D instationnaire sur une barre $\Omega = [0, L]$
+sur l'intervalle de temps $I = [0, T]$ :
 \begin{equation}
-    \rho c \frac{\partial u}{\partial t} - k \frac{\partial^2 u}{\partial x^2} = f(x,t) \quad \text{in } \Omega \times I
+    \rho c \frac{\partial u}{\partial t} - k \frac{\partial^2 u}{\partial x^2} = f(x,t)
+    \quad \text{dans } \Omega \times I
     \label{eq:heat}
 \end{equation}
-with oscillating Dirichlet boundary conditions $u(0,t) = \sin(2\pi t / T)$ and $u(L,t) = -\sin(4\pi t / T)$, and initial condition $u(x,0) = 0$.
+avec des conditions aux limites de Dirichlet oscillantes
+$u(0,t) = \sin(2\pi t / T)$ et $u(L,t) = -\sin(4\pi t / T)$,
+et la condition initiale $u(x,0) = 0$.
 
-The physical parameters are $\rho = c = k = 1$, $L = 1$, $T = 2$, with $n_X = 300$ spatial nodes and $n_T = 100$ time steps. The volume loading $f$ is chosen randomly.
+Les paramètres physiques sont $\rho = c = k = 1$, $L = 1$, $T = 2$,
+avec $n_X = 300$ nœuds spatiaux et $n_T = 100$ pas de temps.
+Le chargement volumique $f$ est choisi aléatoirement.
 
-The objective is to solve this equation using PGD and compare the result with a classical Finite Element reference solution.
+L'objectif est de résoudre cette équation par la méthode PGD et de comparer le résultat
+avec une solution de référence par éléments finis classiques.
 
 % ============================================================
-\section{Reference Solution: FEM with Backward Euler}
+\section{Solution de référence : Éléments Finis + Euler implicite}
 % ============================================================
 
-\subsection{Spatial Discretization}
+\subsection{Discrétisation spatiale}
 
-We approximate $u(x,t) \approx \sum_j U_j(t)\,\varphi_j(x)$ using P1 hat functions $\varphi_j$. The standard Galerkin weak form yields the semi-discrete system:
+Nous approchons $u(x,t) \approx \sum_j U_j(t)\,\varphi_j(x)$ au moyen de fonctions
+de chapeau P1 $\varphi_j$. La formulation faible de Galerkin standard conduit au système
+semi-discret :
 \begin{equation}
     M\dot{U}(t) + KU(t) = F(t)
     \label{eq:semidiscrete}
 \end{equation}
-where $M_{ij} = \int_\Omega \rho c\,\varphi_i\varphi_j\,dx$ is the consistent mass matrix, $K_{ij} = \int_\Omega k\,\varphi_i'\varphi_j'\,dx$ is the stiffness matrix, and $F_i = \int_\Omega f\,\varphi_i\,dx$ is the load vector.
+où $M_{ij} = \int_\Omega \rho c\,\varphi_i\varphi_j\,dx$ est la matrice de masse consistante,
+$K_{ij} = \int_\Omega k\,\varphi_i'\varphi_j'\,dx$ la matrice de rigidité,
+et $F_i = \int_\Omega f\,\varphi_i\,dx$ le vecteur de chargement.
 
-\subsection{Integration Operators}
+\subsection{Opérateurs d'intégration}
 
-For computing $L^2$ norms and inner products in space and time, we assemble consistent integration matrices by looping over elements. The local element mass matrix is $\frac{h}{6}\begin{pmatrix}2&1\\1&2\end{pmatrix}$, assembled globally:
+Pour calculer les normes $L^2$ et les produits scalaires en espace et en temps,
+nous assemblons des matrices d'intégration consistantes en bouclant sur les éléments.
+La matrice de masse élémentaire locale vaut
+$\frac{h}{6}\begin{pmatrix}2&1\\1&2\end{pmatrix}$,
+assemblée globalement :
 \begin{lstlisting}
 Ix = zeros(n_X); It = zeros(n_T);
 Ie_x = dx * [1/3, 1/6; 1/6, 1/3];
@@ -125,64 +140,80 @@ for i = 1:(n_T - 1)
     It(i:i+1, i:i+1) = It(i:i+1, i:i+1) + Ie_t;
 end
 \end{lstlisting}
-Each element contributes its local $2\times2$ mass matrix to the global matrix at the corresponding DOFs. The overlapping assembly naturally produces the tridiagonal structure.
+Chaque élément contribue sa matrice locale $2\times2$ à la matrice globale aux degrés de liberté
+correspondants. L'assemblage par superposition produit naturellement la structure tridiagonale.
 
-\subsection{Time Integration: Backward Euler}
+\subsection{Schéma d'Euler implicite}
 
-The backward Euler scheme approximates $\dot{U}(t_i) \approx (U_i - U_{i-1})/\Delta t$:
+Le schéma d'Euler implicite (rétrograde) approche
+$\dot{U}(t_i) \approx (U_i - U_{i-1})/\Delta t$ :
 \begin{equation}
-    \underbrace{\left(\frac{M}{\Delta t} + K\right)}_{H} U_i = F(t_i) + \frac{M}{\Delta t}U_{i-1}
+    \underbrace{\left(\frac{M}{\Delta t} + K\right)}_{H} U_i
+    = F(t_i) + \frac{M}{\Delta t}U_{i-1}
     \label{eq:euler}
 \end{equation}
+Ce schéma est inconditionnellement stable, ce qui nous permet de choisir $\Delta t$
+librement sans contrainte CFL, à la différence d'un schéma explicite.
 
-\subsection{Boundary Conditions by Substitution}
+\subsection{Conditions aux limites par substitution}
 
-The non-zero Dirichlet boundary conditions are enforced using the substitution method. The degrees of freedom are split into blocked DOFs $\text{ddld} = \{1, n_X\}$ and free DOFs $\text{ddlu}$. At each time step, the system is solved only on free DOFs:
+Les conditions aux limites de Dirichlet non nulles sont imposées par la méthode de
+substitution. Les degrés de liberté sont séparés en DDL bloqués
+$\text{ddld} = \{1, n_X\}$ et DDL libres $\text{ddlu}$.
+À chaque pas de temps, le système est résolu uniquement sur les DDL libres :
 \begin{lstlisting}
 for i = 2:n_T
     G = F(:,i) + (M/dt)*Uex(:,i-1);
     Uex(ddlu,i) = H(ddlu,ddlu) \ (G(ddlu) - H(ddlu,ddld)*Uex(ddld,i));
 end
 \end{lstlisting}
-
-The term $H(\text{ddlu},\text{ddld}) \cdot U_{\text{ex}}(\text{ddld},i)$ transfers the influence of the known boundary values to the right-hand side.
+Le terme $H(\text{ddlu},\text{ddld}) \cdot U_{\text{ex}}(\text{ddld},i)$ transfère
+l'influence des valeurs connues aux frontières vers le second membre.
 
 % ============================================================
-\section{Change of Variable}
+\section{Changement de variable}
 % ============================================================
 
 \subsection{Motivation}
 
-PGD seeks $W(x,t) = \sum_i \Lambda_i(x)\cdot\lambda_i(t)$ where each spatial mode $\Lambda_i$ must vanish at the boundaries. Since the actual solution $U$ has non-zero boundary conditions, we cannot apply PGD directly to $U$.
+La PGD cherche $W(x,t) = \sum_i \Lambda_i(x)\cdot\lambda_i(t)$ où chaque mode spatial
+$\Lambda_i$ doit s'annuler aux frontières pour appartenir à l'espace admissible.
+Puisque la solution réelle $U$ possède des conditions aux limites non nulles,
+nous ne pouvons pas appliquer directement la PGD à $U$.
 
-\subsection{Splitting the Solution}
+\subsection{Décomposition de la solution}
 
-We decompose $U = U_{CL} + W$ where $U_{CL}$ is a ``dynamically admissible'' field that satisfies the boundary and initial conditions, and $W$ is the remainder with homogeneous BCs ($W(0,t) = W(L,t) = 0$).
+Nous décomposons $U = U_{CL} + W$ où $U_{CL}$ est un champ
+\og dynamiquement admissible \fg{} qui satisfait les conditions aux limites et initiales,
+et $W$ est le reste avec des conditions aux limites homogènes
+($W(0,t) = W(L,t) = 0$).
 
-The simplest choice is a linear interpolation:
+Le choix le plus simple est une interpolation linéaire :
 \begin{equation}
-    U_{CL}(x,t) = \left(1 - \frac{x}{L}\right)\sin\!\left(\frac{2\pi t}{T}\right) + \frac{x}{L}\left(-\sin\!\left(\frac{4\pi t}{T}\right)\right)
+    U_{CL}(x,t) = \left(1 - \frac{x}{L}\right)\sin\!\left(\frac{2\pi t}{T}\right)
+    + \frac{x}{L}\left(-\sin\!\left(\frac{4\pi t}{T}\right)\right)
     \label{eq:ucl}
 \end{equation}
-
-In MATLAB, this is computed as an outer product:
+En MATLAB, cela se calcule par un produit extérieur :
 \begin{lstlisting}
 u_cl = (1 - lx'/L) * Ud0 + (lx'/L) * UdL;
 \end{lstlisting}
 
-\subsection{Modified Equation for $W$}
+\subsection{Équation pour $W$}
 
-Substituting $U = U_{CL} + W$ into (\ref{eq:semidiscrete}):
+En substituant $U = U_{CL} + W$ dans (\ref{eq:semidiscrete}) :
 \begin{equation}
     M\dot{W} + KW = \underbrace{F - M\dot{U}_{CL} - KU_{CL}}_{Q_0}
     \label{eq:weq}
 \end{equation}
-
-The time derivative $\dot{U}_{CL}$ is computed using a finite difference operator acting on the right:
+La dérivée temporelle $\dot{U}_{CL}$ est calculée au moyen d'un opérateur de
+différences finies agissant à droite :
 \begin{equation}
-    \mathbb{D}_t = \frac{1}{\Delta t}\begin{pmatrix} 1 & -1 & & \\ & 1 & -1 & \\ & & \ddots & \ddots \end{pmatrix}
+    \mathbb{D}_t = \frac{1}{\Delta t}
+    \begin{pmatrix} 1 & -1 & & \\ & 1 & -1 & \\ & & \ddots & \ddots \end{pmatrix}
 \end{equation}
-so that \texttt{u\_cl\_dot = u\_cl * Dt} computes the time derivative for each spatial node simultaneously. The modified right-hand side is then:
+de sorte que \texttt{u\_cl\_dot = u\_cl * Dt} calcule la dérivée temporelle pour
+chaque nœud spatial simultanément. Le second membre modifié est alors :
 \begin{lstlisting}
 Dt = (1/dt) * (eye(n_T) + diag(-ones(n_T-1,1), 1));
 u_cl_dot = u_cl * Dt;
@@ -191,46 +222,63 @@ G0 = F - M*u_cl_dot - K*u_cl;
 
 \subsection{Validation}
 
-We solve the modified equation (\ref{eq:weq}) for $W$ using the same backward Euler scheme, then recover $U_1 = W + U_{CL}$. The difference $\|U_1 - U_{\text{ex}}\|$ is of order $10^{-12}$, confirming both approaches solve the same equation.
+Nous résolvons l'équation modifiée (\ref{eq:weq}) pour $W$ avec le même schéma
+d'Euler implicite, puis nous récupérons $U_1 = W + U_{CL}$.
+La différence $\|U_1 - U_{\text{ex}}\|$ est de l'ordre de $10^{-12}$,
+ce qui confirme que les deux approches résolvent bien le même problème.
 
 % ============================================================
-\section{PGD Resolution}
+\section{Résolution par PGD}
 % ============================================================
 
-\subsection{Principle of the Separated Representation}
+\subsection{Principe de la représentation séparée}
 
-Instead of time-stepping, PGD seeks $W$ as a sum of separated space-time modes:
+Au lieu d'avancer pas à pas en temps, la PGD cherche $W$ sous la forme d'une somme
+de modes espace-temps séparés :
 \begin{equation}
     W(x,t) = \sum_{i=1}^{m} \Lambda_i(x)\cdot\lambda_i(t)
     \label{eq:pgd_sep}
 \end{equation}
+Chaque mode $(\Lambda_i, \lambda_i)$ est calculé de manière gloutonne, un par un,
+par une alternance de point fixe entre un problème EF spatial et une EDO temporelle.
+L'intérêt est d'éviter de construire et de résoudre le système espace-temps global
+de taille $N_x \times N_T$, ce qui serait prohibitif.
 
-Each mode $(\Lambda_i, \lambda_i)$ is computed greedily, one at a time, using a fixed-point alternation between a spatial FE problem and a temporal ODE.
+\subsection{Formulation faible espace-temps}
 
-\subsection{Weak Form in Space-Time}
-
-The PGD approximation is inserted into the space-time weak form of (\ref{eq:weq}). Testing with $(\Lambda\lambda^* + \Lambda^*\lambda)$:
+L'approximation PGD est insérée dans la formulation faible espace-temps de
+(\ref{eq:weq}). En testant par $(\Lambda\lambda^* + \Lambda^*\lambda)$, où
+$\lambda^*$ et $\Lambda^*$ sont des variations arbitraires :
 \begin{equation}
-    \int_0^T (\Lambda\lambda^* + \Lambda^*\lambda)^\top \left[M\Lambda\dot{\lambda} + K\Lambda\lambda - Q(t)\right]dt = 0
+    \int_0^T (\Lambda\lambda^* + \Lambda^*\lambda)^\top
+    \left[M\Lambda\dot{\lambda} + K\Lambda\lambda - Q(t)\right]dt = 0
     \label{eq:pgd_weak}
 \end{equation}
-where $Q = Q_0 - M\dot{W}_{\text{prev}} - KW_{\text{prev}}$ is the current residual.
+où $Q = Q_0 - M\dot{W}_{\text{prec}} - KW_{\text{prec}}$ est le résidu courant
+(contribution des modes déjà calculés).
 
-\subsection{Fixed-Point Algorithm}
+\subsection{Algorithme de point fixe}
 
-Since the problem is nonlinear in the pair $(\Lambda, \lambda)$, we alternate:
+Le problème étant non linéaire dans la paire $(\Lambda, \lambda)$,
+nous alternons entre deux sous-problèmes linéaires :
 
-\subsubsection{Spatial Sub-Problem ($\lambda$ fixed)}
+\subsubsection{Problème spatial ($\lambda$ fixé)}
 
-Setting $\lambda^* = 0$ in (\ref{eq:pgd_weak}) and removing the arbitrary $\Lambda^*$ yields:
+En posant $\lambda^* = 0$ dans (\ref{eq:pgd_weak}) et en supprimant
+$\Lambda^*$ arbitraire :
 \begin{equation}
-    \underbrace{\left[\left(\int_0^T \lambda\dot{\lambda}\,dt\right)M + \left(\int_0^T \lambda^2\,dt\right)K\right]}_{\mathbb{J}} \Lambda = \underbrace{\int_0^T Q(t)\lambda\,dt}_{q}
+    \underbrace{\left[\left(\int_0^T \lambda\dot{\lambda}\,dt\right)M
+    + \left(\int_0^T \lambda^2\,dt\right)K\right]}_{\mathbb{J}} \Lambda
+    = \underbrace{\int_0^T Q(t)\lambda\,dt}_{q}
     \label{eq:fe_problem}
 \end{equation}
+Les intégrales en temps sont des scalaires calculés à partir du $\lambda$ connu,
+donc $\mathbb{J}$ est une combinaison linéaire de $M$ et $K$ ---
+un système EF standard de taille $N_x \times N_x$ résolu uniquement sur les DDL libres.
+Après résolution, $\Lambda$ est normalisé :
+$\Lambda \leftarrow \Lambda / \sqrt{\Lambda^\top I_x \Lambda}$.
 
-The time integrals are scalars computed from the known $\lambda$, so $\mathbb{J}$ is a linear combination of $M$ and $K$ --- a standard $N_x \times N_x$ FE system solved only on free DOFs. After solving, $\Lambda$ is normalized: $\Lambda \leftarrow \Lambda / \sqrt{\Lambda^\top I_x \Lambda}$.
-
-In MATLAB, with \texttt{lambdatmp} as a $1 \times n_T$ row vector:
+En MATLAB, avec \texttt{lambdatmp} comme vecteur ligne $1 \times n_T$ :
 \begin{lstlisting}
 J = [lambdatmp*Dt*It*lambdatmp']*M + [lambdatmp*It*lambdatmp']*K;
 q = lambdatmp * It * Q';
@@ -239,15 +287,16 @@ LAMBDAtmp(ddlu) = J(ddlu,ddlu) \ q(ddlu)';
 LAMBDAtmp = LAMBDAtmp / sqrt(LAMBDAtmp'*Ix*LAMBDAtmp);
 \end{lstlisting}
 
-\subsubsection{Temporal Sub-Problem ($\Lambda$ fixed)}
+\subsubsection{Problème temporel ($\Lambda$ fixé)}
 
-Setting $\Lambda^* = 0$ and removing the arbitrary $\lambda^*$:
+En posant $\Lambda^* = 0$ et en supprimant $\lambda^*$ arbitraire :
 \begin{equation}
-    \underbrace{\Lambda^\top M\Lambda}_{\alpha}\,\dot{\lambda} + \underbrace{\Lambda^\top K\Lambda}_{\beta}\,\lambda = \underbrace{\Lambda^\top Q(t)}_{\gamma(t)}
+    \underbrace{\Lambda^\top M\Lambda}_{\alpha}\,\dot{\lambda}
+    + \underbrace{\Lambda^\top K\Lambda}_{\beta}\,\lambda
+    = \underbrace{\Lambda^\top Q(t)}_{\gamma(t)}
     \label{eq:ode}
 \end{equation}
-
-This is a scalar ODE solved by backward Euler at negligible cost:
+Il s'agit d'une EDO scalaire résolue par Euler implicite à coût négligeable :
 \begin{equation}
     \lambda_i = \frac{\gamma(t_i)\Delta t + \alpha\,\lambda_{i-1}}{\alpha + \beta\,\Delta t}
 \end{equation}
@@ -262,38 +311,44 @@ for i = 2:n_T
 end
 \end{lstlisting}
 
-\subsubsection{Stagnation Criterion}
+\subsubsection{Critère de stagnation}
 
-The alternation is stopped when $\lambda$ no longer changes significantly:
+L'alternance est stoppée lorsque $\lambda$ n'évolue plus significativement :
 \begin{equation}
-    s = \frac{\int_0^T (\lambda^{\text{new}} - \lambda^{\text{old}})^2\,dt}{\int_0^T (\lambda^{\text{old}})^2\,dt} = \frac{(\lambda^{\text{new}}-\lambda^{\text{old}})\,I_t\,(\lambda^{\text{new}}-\lambda^{\text{old}})^\top}{\lambda^{\text{old}}\,I_t\,(\lambda^{\text{old}})^\top} < 10^{-5}
+    s = \frac{\int_0^T (\lambda^{\text{nouv}} - \lambda^{\text{anc}})^2\,dt}
+    {\int_0^T (\lambda^{\text{anc}})^2\,dt}
+    = \frac{(\lambda^{\text{nouv}}-\lambda^{\text{anc}})\,I_t\,
+    (\lambda^{\text{nouv}}-\lambda^{\text{anc}})^\top}
+    {\lambda^{\text{anc}}\,I_t\,(\lambda^{\text{anc}})^\top} < 10^{-5}
 \end{equation}
 
-\subsection{Greedy Algorithm}
+\subsection{Algorithme glouton}
 
-The complete PGD algorithm is summarized below.
+L'algorithme PGD complet est résumé ci-dessous.
 
 \begin{algorithm}[H]
-\caption{Greedy PGD (without update)}
+\caption{PGD Glouton (sans mise à jour)}
 \begin{algorithmic}[1]
-\State Initialize $W = 0$, $Q_0 = F - M\dot{U}_{CL} - KU_{CL}$
+\State Initialiser $W = 0$, $Q_0 = F - M\dot{U}_{CL} - KU_{CL}$
 \For{$\text{mode} = 1, 2, \ldots, n_{\text{modes}}$}
-    \State Update residual: $Q = Q_0 - M\dot{W} - KW$
-    \State Initialize $\lambda$ (e.g., $\lambda = \mathtt{lt}$)
-    \While{$s > 10^{-5}$ and iterations $< 10$}
-        \State Solve FE problem (\ref{eq:fe_problem}) for $\Lambda$, normalize
-        \State Solve ODE (\ref{eq:ode}) for $\lambda$
-        \State Compute stagnation $s$
+    \State Mettre à jour le résidu : $Q = Q_0 - M\dot{W} - KW$
+    \State Initialiser $\lambda$ (ex. : $\lambda = l_t$)
+    \While{$s > 10^{-5}$ et itérations $< 10$}
+        \State Résoudre le problème EF (\ref{eq:fe_problem}) pour $\Lambda$, normaliser
+        \State Résoudre l'EDO (\ref{eq:ode}) pour $\lambda$
+        \State Calculer la stagnation $s$
     \EndWhile
-    \State Store $\Lambda$ and $\lambda$, update $W = \sum \Lambda_i \lambda_i$
-    \State Compute error $\varepsilon = \|U_{\text{ex}} - U_{\text{PGD}}\|_\mathcal{W} / \|U_{\text{ex}}\|_\mathcal{W}$
+    \State Stocker $\Lambda$ et $\lambda$, mettre à jour $W = \sum \Lambda_i \lambda_i$
+    \State Calculer l'erreur $\varepsilon = \|U_{\text{ex}} - U_{\text{PGD}}\|_\mathcal{W}
+    / \|U_{\text{ex}}\|_\mathcal{W}$
 \EndFor
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Error Computation}
+\subsection{Calcul de l'erreur}
 
-The relative error is measured in the space-time $L^2$ norm. The instructor's implementation integrates first in time for each spatial node, then in space:
+L'erreur relative est mesurée en norme $L^2$ espace-temps.
+L'implémentation intègre d'abord en temps pour chaque nœud spatial, puis en espace :
 \begin{lstlisting}
 error = zeros(n_X, 1);
 norm_U_t = zeros(n_X, 1);
@@ -303,75 +358,339 @@ for i = 1:n_X
 end
 pgd_err = sqrt(error'*Ix*error) / sqrt(norm_U_t'*Ix*norm_U_t);
 \end{lstlisting}
-
-This computes $\varepsilon = \frac{\sqrt{\int_\Omega \left(\int_I (U_{\text{ex}} - U_{\text{PGD}})^2\,dt\right)dx}}{\sqrt{\int_\Omega \left(\int_I U_{\text{ex}}^2\,dt\right)dx}}$, which is the $L^2(\Omega \times I)$ norm.
+Cela calcule
+$\varepsilon = \frac{\sqrt{\int_\Omega \left(\int_I (U_{\text{ex}} - U_{\text{PGD}})^2\,dt\right)dx}}
+{\sqrt{\int_\Omega \left(\int_I U_{\text{ex}}^2\,dt\right)dx}}$,
+soit la norme $L^2(\Omega \times I)$.
 
 % ============================================================
-\section{Results}
+\section{Résultats}
 % ============================================================
 
-\subsection{Reference Solution}
+\subsection{Solution de référence et solution PGD}
 
-The reference solution obtained by FEM + backward Euler is shown in Figure~\ref{fig:ref}. The oscillating boundary conditions create a rich space-time pattern.
-
-% Placeholder for figure
-\begin{figure}[H]
-    \centering
-    \fbox{\parbox{0.7\textwidth}{\centering\vspace{2cm}\textit{Surface plot of $U_{\text{ex}}(x,t)$}\vspace{2cm}}}
-    \caption{Reference solution $U_{\text{ex}}$ computed by FEM + backward Euler.}
-    \label{fig:ref}
-\end{figure}
-
-\subsection{Change of Variable Validation}
-
-The solution $U_1 = W + U_{CL}$ matches the reference to machine precision ($\sim 10^{-12}$), validating the change of variable approach.
-
-\subsection{PGD Convergence}
-
-The PGD error as a function of the number of modes is shown in Figure~\ref{fig:pgd_conv}. The error decreases rapidly with the first few modes, then plateaus. This confirms that the solution manifold is low-dimensional, consistent with the theoretical expectations from the Kolmogorov $n$-width analysis.
+La Figure~\ref{fig:pgd_mode100} présente les résultats obtenus après 100 modes PGD.
+Le panneau de gauche montre la solution de référence $U_{\text{ex}}$ : les conditions
+aux limites oscillantes créent un profil riche en espace-temps avec une propagation
+de chaleur non triviale. Le panneau central montre la solution PGD $U_{\text{PGD}}$ :
+les deux surfaces sont visuellement indiscernables, ce qui témoigne de la qualité de
+la représentation séparée. Le panneau de droite montre l'évolution de l'erreur
+en fonction du nombre de modes.
 
 \begin{figure}[H]
     \centering
-    \fbox{\parbox{0.7\textwidth}{\centering\vspace{2cm}\textit{Semilogy plot of $\varepsilon$ vs.\ number of modes}\vspace{2cm}}}
-    \caption{PGD error convergence: relative error as a function of the number of modes.}
-    \label{fig:pgd_conv}
+    \includegraphics[width=\textwidth]{PGD_mode_100.png}
+    \caption{Résultats PGD après 100 modes : solution de référence $U_{\text{ex}}$ (gauche),
+    solution PGD $U_{\text{PGD}}$ (centre), évolution de $\log_{10}(\varepsilon)$
+    en fonction du nombre de modes (droite).}
+    \label{fig:pgd_mode100}
 \end{figure}
 
-\subsection{PGD vs.\ Reference Solution}
+\subsection{Validation du changement de variable}
 
-Figure~\ref{fig:pgd_ref} compares the reference and PGD solutions visually. After a sufficient number of modes, the PGD solution is visually indistinguishable from the reference.
+La solution $U_1 = W + U_{CL}$ coïncide avec la référence à la précision machine
+($\sim 10^{-12}$), ce qui valide l'approche par changement de variable.
+Cette validation est essentielle avant de lancer l'algorithme PGD : elle garantit
+que le problème modifié (\ref{eq:weq}) que nous résolvons est bien équivalent
+au problème original (\ref{eq:heat}).
+
+\subsection{Convergence PGD}
+
+On observe sur la Figure~\ref{fig:pgd_mode100} que l'erreur décroît de manière
+significative avec les premiers modes, puis se stabilise à un niveau bas.
+Ce comportement reflète la faible dimension intrinsèque de la solution :
+le problème de la chaleur avec des conditions aux limites régulières admet une
+représentation efficace sur un faible nombre de modes séparés.
+Cela est cohérent avec les attentes théoriques liées à la $n$-largeur de Kolmogorov :
+si la $n$-largeur décroît vite, la PGD converge avec peu de modes.
+
+% ============================================================
+\section{Pour aller plus loin}
+% ============================================================
+
+\subsection{PGD avec phase de mise à jour}
+
+\subsubsection{Motivation}
+
+L'algorithme PGD glouton sans mise à jour présente une limitation fondamentale :
+une fois qu'un mode est calculé, il reste figé pour toujours.
+Cela peut mener à une convergence sous-optimale, car chaque mode est calculé
+en supposant que les modes suivants corrigeront exactement les erreurs restantes.
+Pour améliorer la convergence, on peut ajouter, après le calcul de chaque nouveau mode,
+une phase de mise à jour qui recalcule tous les modes temporels simultanément.
+
+\subsubsection{Phase d'orthonormalisation de Gram-Schmidt}
+
+Après le calcul du $n$-ième mode $(\Lambda_n, \lambda_n)$, on orthonormalise
+$\Lambda_n$ par rapport aux modes précédents via le procédé de Gram-Schmidt
+dans le produit scalaire induit par $I_x$ :
+\begin{equation}
+    \Lambda_n \leftarrow \Lambda_n
+    - \sum_{j=1}^{n-1} (\Lambda_n^\top I_x \Lambda_j)\, \Lambda_j
+\end{equation}
+En compensant les modes temporels pour maintenir l'égalité $W = \Lambda\lambda$ :
+\begin{equation}
+    \lambda_j \leftarrow \lambda_j
+    + (\Lambda_n^\top I_x \Lambda_j)\, \lambda_n \quad \forall j < n
+\end{equation}
+Puis on renormalise : $\lambda_n \leftarrow \lambda_n \cdot \|\Lambda_n\|_{I_x}$ et
+$\Lambda_n \leftarrow \Lambda_n / \|\Lambda_n\|_{I_x}$.
+Cela garantit que la base spatiale $\{\Lambda_1, \ldots, \Lambda_n\}$ est
+orthonormale pour $I_x$, ce qui simplifie et stabilise la phase de mise à jour.
+
+\subsubsection{Phase de mise à jour par projection de Galerkin}
+
+On cherche à mettre à jour simultanément tous les modes temporels
+$\{\lambda_1(t), \ldots, \lambda_n(t)\}$ en projetant l'équation modifiée
+(\ref{eq:weq}) sur la base spatiale courante.
+En injectant $W = \sum_{r=1}^n \Lambda_r \lambda_r(t)$ et en testant par
+$\Lambda_p$ pour $p = 1, \ldots, n$, on obtient le système couplé :
+\begin{equation}
+    \sum_{r=1}^n \left[(\Lambda_p^\top M \Lambda_r)\,\dot{\lambda}_r
+    + (\Lambda_p^\top K \Lambda_r)\,\lambda_r\right]
+    = \Lambda_p^\top Q_0(t) \quad \forall p = 1, \ldots, n
+\end{equation}
+Après discrétisation par Euler implicite, on résout à chaque pas de temps
+un petit système de taille $n \times n$ :
+\begin{equation}
+    A\,\boldsymbol{\lambda}_{\text{up}}(:,i)
+    = \boldsymbol{\Lambda}^\top Q_0(:,i)
+    + M_{\text{mat}}\,\boldsymbol{\lambda}_{\text{up}}(:,i-1)
+    \label{eq:update}
+\end{equation}
+où les matrices $A$ et $M_{\text{mat}}$ sont de taille $n \times n$,
+calculées une seule fois par mode :
+\begin{equation}
+    A_{pr} = \frac{1}{\Delta t}\,\Lambda_p^\top M \Lambda_r
+    + \Lambda_p^\top K \Lambda_r,
+    \qquad
+    M_{\text{mat},pr} = \frac{1}{\Delta t}\,\Lambda_p^\top M \Lambda_r
+\end{equation}
+
+\begin{lstlisting}
+% Construction des matrices n x n (independantes du temps)
+A_mat = zeros(mode, mode);
+M_mat = zeros(mode, mode);
+for p = 1:mode
+    for r = 1:mode
+        A_mat(p,r) = (1/dt)*LAMBDA(:,p)'*M*LAMBDA(:,r) ...
+                     + LAMBDA(:,p)'*K*LAMBDA(:,r);
+        M_mat(p,r) = (1/dt)*LAMBDA(:,p)'*M*LAMBDA(:,r);
+    end
+end
+% Resolution du systeme en temps
+lambdaup = zeros(mode, n_T);
+for i = 2:n_T
+    rhs = LAMBDA'*Q0(:,i) + M_mat*lambdaup(:,i-1);
+    lambdaup(:,i) = A_mat \ rhs;
+end
+\end{lstlisting}
+
+Grâce à cette mise à jour, la solution PGD devient une approximation de Galerkin
+sur la base spatiale courante, ce qui améliore sensiblement la convergence par rapport
+à la version sans mise à jour.
+
+\subsubsection{Résultats}
+
+La Figure~\ref{fig:pgd_update} montre les résultats de la PGD avec mise à jour
+après 100 modes.
 
 \begin{figure}[H]
     \centering
-    \fbox{\parbox{0.7\textwidth}{\centering\vspace{2cm}\textit{Side-by-side: $U_{\text{ex}}$ and $U_{\text{PGD}}$}\vspace{2cm}}}
-    \caption{Comparison between the reference (left) and PGD (right) solutions.}
-    \label{fig:pgd_ref}
+    \includegraphics[width=\textwidth]{PGD_update_mode_100.png}
+    \caption{PGD avec mise à jour après 100 modes : solution de référence (gauche),
+    solution PGD avec mise à jour (centre), évolution de l'erreur (droite).}
+    \label{fig:pgd_update}
 \end{figure}
 
-% ============================================================
-\section{Complexity Analysis}
-% ============================================================
+La Figure~\ref{fig:pgd_comparison} compare directement la convergence des deux variantes.
+On constate que la phase de mise à jour accélère la convergence :
+la PGD avec mise à jour atteint des niveaux d'erreur nettement inférieurs
+avec le même nombre de modes.
 
-The computational cost of each approach can be compared:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{PGD_comparison.png}
+    \caption{Comparaison PGD sans et avec mise à jour.
+    Gauche : différence des champs $U_{\text{PGD}} - U_{\text{PGD,update}}$.
+    Droite : courbes de convergence comparées -- sans mise à jour (bleu)
+    vs.\ avec mise à jour (rouge).}
+    \label{fig:pgd_comparison}
+\end{figure}
 
-The classical FEM + Euler approach requires $N_t$ linear solves of size $N_x$, each costing $\mathcal{O}(N_x^2)$ operations (for a banded system), giving a total cost of $\mathcal{O}(N_t \cdot N_x^2)$.
+\subsection{Comparaison avec la décomposition en valeurs singulières}
 
-The PGD approach, for $m$ modes with $p$ fixed-point iterations each, requires $m \cdot p$ FE solves of size $N_x$ (cost $\mathcal{O}(N_x^2)$ each) plus $m \cdot p$ ODE solves of size $N_t$ (cost $\mathcal{O}(N_t)$ each). The total cost is $\mathcal{O}(m \cdot p \cdot (N_x^2 + N_t))$.
+\subsubsection{La SVD comme borne optimale}
 
-When $m \cdot p \ll N_t$, which is the typical regime for smooth problems, PGD is significantly more efficient.
+La décomposition en valeurs singulières (SVD) de la matrice
+$U_{\text{ex}} \in \mathbb{R}^{N_x \times N_T}$ donne :
+\begin{equation}
+    U_{\text{ex}} = \sum_{i=1}^{\min(N_x,N_T)} \sigma_i\, u_i\, v_i^\top
+    \label{eq:svd}
+\end{equation}
+où les $\sigma_i \geq 0$ sont les valeurs singulières rangées en ordre décroissant.
+La troncature à $m$ termes :
+\begin{equation}
+    U_{\text{ex}}^{(m)} = \sum_{i=1}^{m} \sigma_i\, u_i\, v_i^\top
+\end{equation}
+est, d'après le théorème d'Eckart-Young, la meilleure approximation de rang $m$
+de $U_{\text{ex}}$ au sens de la norme de Frobenius.
+Elle constitue donc un minorant théorique de l'erreur pour toute méthode
+de représentation séparée de rang $m$.
+
+On notera que la SVD est une méthode a posteriori : elle nécessite de connaître
+la solution complète $U_{\text{ex}}$ pour construire la décomposition.
+En ce sens, elle n'est pas une méthode de réduction de modèle opérationnelle,
+mais elle fournit une référence optimale pour évaluer les méthodes a priori comme la PGD.
+
+\subsubsection{Résultats de la comparaison}
+
+En MATLAB, le calcul SVD et l'erreur associée s'effectuent ainsi :
+\begin{lstlisting}
+[U_svd, S_svd, V_svd] = svd(Uex, 'econ');
+for n = 1:n_modes
+    Uex_svd = U_svd(:,1:n) * S_svd(1:n,1:n) * V_svd(:,1:n)';
+    % ... calcul de l'erreur avec la meme norme L2 ...
+end
+\end{lstlisting}
+
+La Figure~\ref{fig:pgd_svd} présente la comparaison des courbes de convergence
+des trois méthodes, ainsi que les valeurs singulières de $U_{\text{ex}}$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{PGD_vs_SVD_comparison.png}
+    \caption{Gauche : convergence comparée -- PGD sans mise à jour (bleu),
+    PGD avec mise à jour (rouge), SVD optimale (noir).
+    Droite : valeurs singulières $\sigma_i$ de $U_{\text{ex}}$.}
+    \label{fig:pgd_svd}
+\end{figure}
+
+Plusieurs observations s'imposent.
+La SVD converge plus vite que les deux variantes PGD avec le même nombre de modes :
+c'est attendu puisqu'elle est optimale par construction.
+La PGD avec mise à jour s'approche davantage de la borne SVD que la PGD sans mise à jour,
+ce qui confirme l'intérêt de la phase de mise à jour.
+Enfin, la décroissance rapide des valeurs singulières confirme la faible dimension
+intrinsèque de la solution : l'essentiel de l'information est concentré dans
+un faible nombre de modes séparés.
+Ce résultat est directement lié à la notion de $n$-largeur de Kolmogorov :
+une décroissance rapide des valeurs singulières implique que le sous-espace optimal
+de dimension $n$ approxime très bien la variété des solutions.
+
+\subsection{Analyse de complexité}
+
+\subsubsection{Comparaison théorique}
+
+Nous comparons ici le coût algorithmique des deux approches en termes
+d'opérations flottantes.
+
+\paragraph{Schéma EF + Euler implicite :}
+À chaque pas de temps, nous résolvons un système linéaire de taille $N_x$.
+Pour un système dense, le coût par résolution est $\mathcal{O}(N_x^2)$.
+Sur $N_T$ pas de temps :
+\begin{equation}
+    \text{Coût}_{\text{EF+Euler}} = \mathcal{O}(N_T \cdot N_x^2)
+\end{equation}
+
+\paragraph{PGD (sans mise à jour) :}
+Pour $m$ modes et $p$ itérations de point fixe en moyenne par mode :
+\begin{itemize}
+    \item $m \cdot p$ résolutions du problème EF spatial : coût $\mathcal{O}(N_x^2)$ chacune
+    \item $m \cdot p$ résolutions de l'EDO temporelle : coût $\mathcal{O}(N_T)$ chacune
+\end{itemize}
+\begin{equation}
+    \text{Coût}_{\text{PGD}} = \mathcal{O}\!\left(m \cdot p \cdot (N_x^2 + N_T)\right)
+\end{equation}
+
+La PGD est avantageuse lorsque $m \cdot p \ll N_T$, c'est-à-dire lorsque la solution
+est bien représentée par un faible nombre de modes séparés.
+Le rapport de coût s'écrit :
+\begin{equation}
+    \frac{\text{Coût}_{\text{PGD}}}{\text{Coût}_{\text{EF+Euler}}}
+    \approx \frac{m \cdot p}{N_T}
+    \quad (\text{pour } N_x^2 \gg N_T)
+\end{equation}
+Avec $m = 20$ modes, $p = 5$ itérations, et $N_T = 100$ pas de temps,
+ce rapport vaut $20 \times 5 / 100 = 1$.
+Pour $N_T = 1000$, il chute à $0.1$ : la PGD est dix fois moins chère.
+
+\subsubsection{Vérification numérique}
+
+Pour vérifier cette analyse, nous avons calculé numériquement le nombre d'opérations
+théorique en faisant varier $N_x$ et $N_T$ séparément avec les paramètres :
+$m = 20$ modes, $p = 5$ itérations de point fixe en moyenne.
+
+\begin{lstlisting}
+% Cout theorique FEM + Euler : O(n_T * n_X^2)
+cost_fem = nt * nx^2;
+% Cout theorique PGD : O(n_m * n_iter_fp * (n_X^2 + n_T))
+cost_pgd = n_m * n_iter_fp * (nx^2 + nt);
+\end{lstlisting}
+
+La Figure~\ref{fig:complexity} montre les courbes de complexité en échelle log-log.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{PGD_complexity_comparison.png}
+    \caption{Comparaison des complexités algorithmiques : EF+Euler (bleu) vs.\ PGD (rouge).
+    Gauche : en fonction de $N_x$ ($N_T = 100$ fixé).
+    Droite : en fonction de $N_T$ ($N_x = 300$ fixé).}
+    \label{fig:complexity}
+\end{figure}
+
+On observe clairement que :
+\begin{itemize}
+    \item En fonction de $N_x$, les deux méthodes affichent la même pente en échelle
+    log-log ($\mathcal{O}(N_x^2)$), ce qui est attendu : les deux nécessitent
+    des résolutions de systèmes linéaires spatiaux de taille $N_x$.
+    Le décalage vertical entre les courbes correspond simplement au facteur multiplicatif
+    $m \cdot p$ vs.\ $N_T$.
+
+    \item En fonction de $N_T$, le coût EF+Euler croît linéairement (pente 1 en log-log),
+    tandis que le coût PGD reste pratiquement constant (pour un nombre de modes fixé).
+    C'est ici que la PGD prend tout son avantage : plus $N_T$ est grand,
+    plus le gain relatif en faveur de la PGD est important.
+\end{itemize}
+
+Ces observations confirment que la PGD est particulièrement adaptée aux problèmes
+avec un grand nombre de pas de temps et une solution de faible dimension intrinsèque,
+ce qui est le cas typique pour notre équation de la chaleur.
 
 % ============================================================
 \section{Conclusion}
 % ============================================================
 
-This practical session demonstrated the PGD method as an a priori model order reduction technique for solving the 1D unsteady heat equation. The key steps were:
+Cette séance pratique nous a permis d'implémenter et de tester la méthode PGD
+comme technique de réduction de modèle a priori pour la résolution de l'équation
+de la chaleur 1D instationnaire. Les points essentiels que nous retenons sont
+les suivants.
 
-The change of variable $U = U_{CL} + W$ transforms the problem with non-homogeneous boundary conditions into one with zero BCs, enabling the separated representation.
+Le \textbf{changement de variable} $U = U_{CL} + W$ transforme le problème avec des
+conditions aux limites non homogènes en un problème à conditions homogènes,
+indispensable pour chercher $W$ sous forme séparée.
 
-The fixed-point alternation between a spatial FE problem and a temporal ODE efficiently computes each mode without assembling the full space-time system.
+\textbf{L'alternance de point fixe} entre un problème EF spatial et une EDO temporelle
+permet de calculer chaque mode de manière efficace, sans assembler ni résoudre
+le système espace-temps global.
 
-The greedy algorithm builds modes one by one, each correcting the residual left by the previous modes.
+\textbf{L'algorithme glouton} construit les modes un par un, chacun corrigeant le résidu
+laissé par les modes précédents. Sa convergence rapide confirme la faible dimension
+intrinsèque de la solution pour ce type de problème.
 
-The PGD solution converges rapidly with a small number of modes ($m \ll N_t$), confirming that the solution manifold is intrinsically low-dimensional. This makes PGD particularly attractive for problems where the classical time-stepping approach would be prohibitively expensive, such as multi-parametric or real-time applications.
+La \textbf{phase de mise à jour} par projection de Galerkin améliore sensiblement la
+convergence en recalculant simultanément tous les modes temporels sur la base spatiale
+courante. Elle rapproche la PGD de la borne optimale fournie par la SVD.
+
+La \textbf{comparaison avec la SVD} montre que la PGD avec mise à jour approche la
+décomposition optimale, ce qui valide à la fois l'implémentation et l'intérêt de la
+méthode. La décroissance rapide des valeurs singulières de $U_{\text{ex}}$ confirme
+que le problème est intrinsèquement de faible dimension.
+
+Enfin, l'\textbf{analyse de complexité} confirme l'avantage de la PGD pour les problèmes
+avec un grand nombre de pas de temps : le coût de la PGD ne croît pas avec $N_T$
+(pour un nombre de modes fixé), contrairement au schéma EF+Euler.
+Cet avantage devient décisif dans des contextes multi-paramétriques ou temps-réel,
+où la même base réduite peut être réutilisée pour de nombreuses configurations.
 
 \end{document}
